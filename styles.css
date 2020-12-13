@@ -1,0 +1,34 @@
+#content {
+    clear: both;
+    line-height: 0;
+    -webkit-column-count: 4;
+    -webkit-column-gap: 0px;
+    -moz-column-count: 4;
+    -moz-column-gap: 0px;
+    column-count: 4;
+    column-gap: 0px;
+}
+
+.menu-item {
+    float: left;
+    list-style-type: none;
+}
+
+.inline-div {
+    display: inline;
+}
+
+.content-item {
+    width: 100% !important;
+    height: auto !important;
+    border: 8px double black;
+}
+
+#blowup {
+    width: 100%;
+    top: 0;
+    bottom: 0;
+    position: fixed;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
