@@ -30,8 +30,12 @@ var redditapi = (function() {
             return 'https://www.reddit.com/r/' + subreddit;
         },
 
-        generateSubredditJsonUrl: function(subreddit) {
-            return 'https://www.reddit.com/r/' + subreddit + '/top/.json?limit=100';
+        generateSubredditJsonUrl: function(subreddit, sort, after, before) {
+            if (!sort) { sort = 'top'; }
+            var url = 'https://www.reddit.com/r/' + subreddit + '/' + sort + '/.json?limit=100';
+            if (after) { return url + '&after=' + after; }
+            if (before) { return url + '&before=' + before; }
+            return url;
         },
 
         getSubreddits: function(callback) {
@@ -40,9 +44,9 @@ var redditapi = (function() {
             });
         },
 
-        getSubredditJson: function(subreddit, callback) {
+        getSubredditJson: function(subreddit, sort, after, before, callback) {
             var self = this;
-            ajax.GET(self.generateSubredditJsonUrl(subreddit), function(xhr) {
+            ajax.GET(self.generateSubredditJsonUrl(subreddit, sort, after, before), function(xhr) {
                 callback(JSON.parse(xhr.responseText));
             });
         }
@@ -64,6 +68,27 @@ var app = (function() {
 
     var textbox = function() {
         return document.getElementById('subreddit');
+    }
+
+    var prevBtn = function() {
+        return document.getElementById('previous');
+    }
+
+    var nextBtn = function() {
+        return document.getElementById('next');
+    }
+
+    var sortRadioBtns = function() {
+        return document.getElementsByName('sort');
+    }
+
+    var getSortValue = function() {
+        var radios = sortRadioBtns();
+        for (var i = 0; i < radios.length; i++) {
+            if (radios[i].checked) {
+                return radios[i].value;
+            }
+        }
     }
 
     var render = function(response) {
@@ -101,6 +126,9 @@ var app = (function() {
                     contentdiv().appendChild(parentElemToAppend);
                 }
             }
+
+            prevBtn().value = response.data.before;
+            nextBtn().value = response.data.after;
 
             var classname = document.getElementsByClassName('content-item');
 
@@ -144,11 +172,10 @@ var app = (function() {
 
     return {
         init: function() {
-
             textbox().addEventListener('keyup', (event) => {
                 if (event.keyCode === 13) {
                     event.preventDefault();
-                    redditapi.getSubredditJson(textbox().value, function(response) {
+                    redditapi.getSubredditJson(textbox().value, getSortValue(), null, null, function(response) {
                         console.log(response);
                         contentdiv().innerHTML = '';
                         render(response);
@@ -156,7 +183,32 @@ var app = (function() {
                 }
             })
 
+            prevBtn().addEventListener('click', (event) => {
+                redditapi.getSubredditJson(textbox().value, getSortValue(), null, prevBtn().value, function(response) {
+                    console.log(response);
+                    contentdiv().innerHTML = '';
+                    render(response);
+                });
+            });
 
+            nextBtn().addEventListener('click', (event) => {
+                redditapi.getSubredditJson(textbox().value, getSortValue(), nextBtn().value, null, function(response) {
+                    console.log(response);
+                    contentdiv().innerHTML = '';
+                    render(response);
+                });
+            });
+
+            var rad = sortRadioBtns();
+            for (var i = 0; i < rad.length; i++) {
+                rad[i].addEventListener('change', function() {
+                    redditapi.getSubredditJson(textbox().value, getSortValue(), null, null, function(response) {
+                        console.log(response);
+                        contentdiv().innerHTML = '';
+                        render(response);
+                    });
+                });
+            }
 
             // redditapi.getSubreddits(function(response) {
             //     for (var i = 0; i < response.data.children.length; i++) {
@@ -179,7 +231,7 @@ var app = (function() {
             //     }
             // })
 
-            redditapi.getSubredditJson('all', function(response) {
+            redditapi.getSubredditJson('all', null, null, null, function(response) {
                 console.log(response);
                 render(response);
             })
